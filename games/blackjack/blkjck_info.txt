@@ -1,0 +1,6 @@
+# player|chips
+player|62
+
+# deck|amount
+deck|52
+
