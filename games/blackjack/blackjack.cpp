@@ -43,16 +43,16 @@ bool loadDeckFromFile(Deck& deck);
 void savePlayerToFile(Player& player);
 void saveDeckToFile(Deck& deck);
 //bool checkFile();
+//------------------------------------------------------------------------------------------
 
 
-
-
+//Clears the input buffer when needed
 void clearInputBuffer() {
     cin.clear();
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 }
 
-
+//Gets an integer from the user, checking to make sure the input is actually an integer
 int getIntInput() {
     int value;
     while (!(cin >> value)) {
@@ -63,7 +63,7 @@ int getIntInput() {
     return value;
 }
 
-
+//Same as integer, only for double
 double getDoubleInput() {
     double value;
     while (!(cin >> value)) {
@@ -79,7 +79,60 @@ double getDoubleInput() {
 //}
 
 
+//Loads the amount of cards in the deck from the file
 bool loadDeckFromFile(Deck& deck) {
+    string filename = "blkjck_info.txt"; 
+
+    //makes sure file opens
+    ifstream file(filename);
+    if (!file) {
+        cerr << "Error: File Could Not Open " << filename << endl;
+        return false;
+    }
+
+    string line;
+    string mode;
+
+    //checks which lines it needs to read
+    while (getline(file, line)) {
+        if (line.empty() || line[0] == '#') {
+            if (line == "# player|chips") mode = "player";
+            if (line == "# deck|amount") mode = "deck";
+            continue;
+        }
+
+        //reads the formatted file lines
+        stringstream ss(line);
+        string part1, part2;
+        getline(ss, part1, '|');
+        getline(ss, part2);
+
+        //if the deck line is selected, it stores the integer found into the deck
+        //if there is an invalid or missing number, it initializes a standard 52 card deck
+        if (mode == "deck") {
+            if (part2.empty() || stoi(part2) <= 0) {
+                cout << "\n- Deck size in file is empty, adding 52 to shoe -\n";
+                deck.clearDeck();
+                deck.populateDeck(52);
+                file.close();
+                return true;
+            }
+            deck.populateDeck(stoi(part2));
+
+        }
+
+    }
+
+    //closes file and returns a true
+    file.close();
+    return true;
+
+}
+
+
+//Loads the player chip amount from the file, same as the deck function
+bool loadPlayerFromFile(Player& player) {
+
     string filename = "blkjck_info.txt"; 
 
     ifstream file(filename);
@@ -103,52 +156,6 @@ bool loadDeckFromFile(Deck& deck) {
         getline(ss, part1, '|');
         getline(ss, part2);
 
-        if (mode == "deck") {
-            if (part2.empty() || stoi(part2) <= 0) {
-                cout << "\n- Deck size in file is empty, adding 52 to shoe -\n";
-                deck.clearDeck();
-                deck.populateDeck(52);
-                file.close();
-                return true;
-            }
-            deck.populateDeck(stoi(part2));
-
-        }
-
-    }
-
-    file.close();
-    return true;
-
-}
-
-
-bool loadPlayerFromFile(Player& player) {
-//!! make this able to load specific players/decks
-
-    string filename = "blkjck_info.txt"; 
-
-    ifstream file(filename);
-    if (!file) {
-        cerr << "Error: File Could Not Open " << filename << endl;
-        return false;
-    }
-
-    string line;
-    string mode;
-
-    while (getline(file, line)) {
-        if (line.empty() || line[0] == '#') {
-            if (line == "# player|chips") mode = "player";
-            if (line == "# deck|amount") mode = "deck";
-            continue;
-        }
-
-        stringstream ss(line);
-        string part1, part2;
-        getline(ss, part1, '|');
-        getline(ss, part2);                 //!! Make sure missing or negative chips go to a default
-
         if (mode == "player") {
             if (part2.empty() || stoi(part2) <= 0) {
                 cout << "\n- Player chips in file are empty, adding 50 -\n";
@@ -167,6 +174,7 @@ bool loadPlayerFromFile(Player& player) {
 
 }
 
+//Displays credits, nothin much here
 void const creditsDisplay() {
 
     cout << "\n\n- - - - - - - - - - - - -\nCreated by Conner T (me)\n- - - - - - - - - - - - -\n\n";
@@ -174,6 +182,7 @@ void const creditsDisplay() {
 }
 
 
+//Diplays tutorial to user
 void const tutorialDisplay() {
 
     cout << " -- Welcome to Black Jack! -- \n";
@@ -185,6 +194,7 @@ void const tutorialDisplay() {
 
 }
 
+//Initial menu for the user, returns the user input integer
 int initialMenu() {
     cout << "===== Black Jack =====\n";
     cout << "1. Play Plain Black Jack\n"; 
@@ -198,6 +208,7 @@ int initialMenu() {
 }
 
 
+//Settings menu for user, same as main menu
 int settingsMenu() {
     cout << "----- GAME SETTINGS -----\n";
     cout << "1. Change Deck Size\n"; 
@@ -212,11 +223,14 @@ int settingsMenu() {
 }
 
 
+//Changes the settings of the game for the user
 void changeSettings(Deck& deck, Player& player) {
+
+    //initializes the variables for the switch case
     bool running = true;
     int userin;
-    Card draw;
 
+    //While running is true, make the userinput for settings 0 and go into the switch case
     while (running) { 
         userin = 0;
         int choice = settingsMenu();
@@ -261,14 +275,14 @@ void changeSettings(Deck& deck, Player& player) {
 
 }
 
-
+//Main function, it initializes the deck and player as well as seeds the random number
 int main() {
     srand(time(0));
-    Card testcard;
     bool running = true;
     Deck deck;
     Player player;
 
+    //loads deck first in case of invalidness 
     loadDeckFromFile(deck);
 
     while (running) { 
@@ -303,12 +317,7 @@ int main() {
 }
 
 
-// void dealHandToPlayers(Player& player) {
-//     Card drawcard;
-
-
-// }
-
+//Play menu for user
 int playMenu() {
     cout << "\n--------BLACK JACK--------\n";
     cout << "1. Call Card\n";
@@ -324,10 +333,11 @@ int playMenu() {
 
 
 
-
+//Playing the game function holding most of the operations
 void playingBlackJack(Deck& deck, Player& player) {
-    Player testplayer;
-    Player testplayer2;
+
+    //Initializing everything in this function
+    //Bools for all the checks are set as well as the drawn card object
     Card draw;
     bool loaded_player = false;
     bool loaded_deck = false;
@@ -336,7 +346,6 @@ void playingBlackJack(Deck& deck, Player& player) {
     bool isdeckpop = true;
     bool phold = false;
     int players_total = 0; 
-    vector<Player> players; //!! make possible
     int playerbet = 0;
 
     bool validbet = true;
@@ -344,6 +353,7 @@ void playingBlackJack(Deck& deck, Player& player) {
     loaded_player = loadPlayerFromFile(player);
 
 
+    //Checks that both player and deck are loaded from file
     if (loaded_player == false || loaded_deck == false) {
         cout << " - Error, player/deck not loaded - \n";
         return;
@@ -351,6 +361,7 @@ void playingBlackJack(Deck& deck, Player& player) {
     }
 
 
+    //Checks again that player and deck is loaded so that player may place bet
     if (loaded_player == true && loaded_deck == true) {
         //player bet setting
         player.displayPlayerChips();
@@ -361,6 +372,7 @@ void playingBlackJack(Deck& deck, Player& player) {
 
             playerbet = getIntInput(); 
 
+            //Checks that bet is in valid range
             if (playerbet > player.getPlayerChips() || playerbet <= 0) {
                 cout << " - Invalid bet - \n";
                 player.displayPlayerChips();
@@ -380,7 +392,7 @@ void playingBlackJack(Deck& deck, Player& player) {
     }
 
 
-    //Dealer Initialization
+    //Dealer Initialization - draws two cards
     Player dealer;
     dealer.clearPlayerHand();
     for (int i = 0; i < 1; i++) {
@@ -416,13 +428,14 @@ void playingBlackJack(Deck& deck, Player& player) {
     cout << "You are dealt one card. A " << draw.printRank() << " of " << draw.printSuit() << "\n"; 
 
 
-    //!! only does one round 
+    //While playing and while there are enough cards in the deck, run the switch case for playing
     while (playing && isdeckpop) {
         findcard = true;
         int choice = playMenu();    
 
         switch(choice) {
             case 1: // Call Card
+                //Continues until a valid card is found in the deck then adds to hand
                 while(findcard) {
                     draw = draw.drawCard();
                     if (deck.drawCardFromDeck(draw) == true) {
@@ -463,6 +476,7 @@ void playingBlackJack(Deck& deck, Player& player) {
         };
 
 
+        //Checks if player is over 21 after a card is drawn
         if (player.checkPlayerHand() == false) { 
             player.removeChipsFromPlayer(playerbet);
             cout << "== You have bust ==\n";
@@ -479,10 +493,9 @@ void playingBlackJack(Deck& deck, Player& player) {
 
         }
 
-
+        //checks if deck is populated
         if (deck.checkForEmptyDeck() == false) {
             isdeckpop = false;
-            //Deck deck(13); //!! make this into deck(playerentered)
         }
 
 
@@ -492,15 +505,19 @@ void playingBlackJack(Deck& deck, Player& player) {
 
 }
 
+//When the player holds their hand, it runs here
 void playerHoldCheck(Player& player, Player& dealer, Deck& deck, int &playerbet) {
+    //Initializing player total and dealer total hand
     int pt = player.addPlayerHand();
     int dt = dealer.addPlayerHand();
     Card draw;
     bool findcard;
 
+    //Draws while dealer total is less than 17
     cout << "\nWhile dealer has less than 17, they draw.\n";
     while (dt <= 17) {
         findcard = true;
+        //Same findcard function in playing function
         while(findcard) {
             draw = draw.drawCard();
             if (deck.drawCardFromDeck(draw) == true) {
@@ -515,6 +532,7 @@ void playerHoldCheck(Player& player, Player& dealer, Deck& deck, int &playerbet)
     }
 
 
+    //if dealer is above 21, they lose and player wins
     if (dt > 21) {
         cout << "The dealer has bust with: \n";
         dealer.displayPlayerHand();
@@ -525,37 +543,42 @@ void playerHoldCheck(Player& player, Player& dealer, Deck& deck, int &playerbet)
         cout << " - Chips increased to: " << player.getPlayerChips() << " -\n";
         
     }
+    //if dealer is at or above 17 and player is higher
     else if (pt > dt) {
         cout << "You beat the dealer!\nDealer: " << dt << "\nPlayer: " << pt << "\n=You Won!=\n";
         player.addChipsToPlayer(playerbet);
         cout << " - Chips increased to: " << player.getPlayerChips() << " -\n";
 
     }
+    //if player is less than dealer
     else if (dt > pt) {
         cout << "Dealer: " << dt << "\nPlayer: " << pt << "\n=The dealer wins=\n";
         player.removeChipsFromPlayer(playerbet);
         cout << " - Chips decreased to: " << player.getPlayerChips() << " -\n";
 
     }
+    //if dealer and player are equal
     else if (pt == dt) {
         cout << "You and the dealer have equal hands\n" << "Dealer: " << dt << "\nPlayer: " << pt << "\n=Pushed Hand=\n";
         cout << " - Chips stay the same - \n";
 
     }
+    //error catch
     else {
         cout << " - Error in adding/comparing hands - \n"; 
 
     }
 
 
+    //saves the chips to file and buffer for user
     savePlayerToFile(player);
     cout << "Press Enter to Continue\n\n";
     cin.ignore(std::numeric_limits<streamsize>::max(),'\n');
 
 }
 
+//Saves the player chips to the file
 void savePlayerToFile(Player& player) {
-                                                        //!! make this able to add more decks and players
     string filename = "blkjck_info.txt"; 
 
     ifstream file(filename);
@@ -569,6 +592,7 @@ void savePlayerToFile(Player& player) {
     int count;
     int line_number;
 
+    //Finds the line where the player is 
     while (getline(file, line)) {
         count += 1;
         file_lines.push_back(line);
@@ -578,10 +602,12 @@ void savePlayerToFile(Player& player) {
         }
     }
 
+    //makes a vector of the file, replacing the player chips
     int chips = player.getPlayerChips();
     string input = "player|" + to_string(chips);
     vector<char> input_vector(input.begin(), input.end());
 
+    //Erases and replaces the player chip count
     file_lines.erase(file_lines.begin() + line_number);  
     for (size_t i; i < input_vector.size(); i++){
         file_lines[line_number].push_back(input_vector[i]);
@@ -598,6 +624,7 @@ void savePlayerToFile(Player& player) {
     }
 
 
+    //Writes the new file 
     for (size_t i = 0; i < file_lines.size(); i++) {
         myFile << file_lines[i] << "\n";
 
@@ -610,9 +637,9 @@ void savePlayerToFile(Player& player) {
 }
 
 
-
+//Saves the card amount to deck
+//Exactly the same as the player function, only replacing the deck amount instead of player chip amount
 void saveDeckToFile(Deck& deck) {
-                                                        //!! make this able to add more decks and players
 
     string filename = "blkjck_info.txt"; 
 
