@@ -177,7 +177,7 @@ bool loadPlayerFromFile(Player& player) {
 //Displays credits, nothin much here
 void const creditsDisplay() {
 
-    cout << "\n\n- - - - - - - - - - - - -\nCreated by Conner T (me)\n- - - - - - - - - - - - -\n\n";
+    cout << "\n\n- - - - - - - - - - - - -\nCreated by Conner Torrescano\n- - - - - - - - - - - - -\n\n";
 
 }
 
@@ -339,6 +339,7 @@ void playingBlackJack(Deck& deck, Player& player) {
     //Initializing everything in this function
     //Bools for all the checks are set as well as the drawn card object
     Card draw;
+    player.clearPlayerHand();
     bool loaded_player = false;
     bool loaded_deck = false;
     bool findcard = true;
